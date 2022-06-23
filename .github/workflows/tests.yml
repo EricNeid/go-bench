@@ -29,7 +29,7 @@ jobs:
         fi
 
     - name: Build
-      run: go build -v ./cmd/getdockerimage/
+      run: go build -v ./cmd/gobench/
 
     - name: Test
       run: go test -v ./...
