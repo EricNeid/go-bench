@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: 2021 Eric Neidhardt
 // SPDX-License-Identifier: MIT
+
+// Package verify provides utility functions for tests.
 package verify
 
 import (

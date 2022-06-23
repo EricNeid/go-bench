@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: 2021 Eric Neidhardt
 // SPDX-License-Identifier: MIT
+
+// Package client provides custom http client that measure throughput.
 package client
 
 import (
@@ -13,8 +15,9 @@ import (
 	"time"
 )
 
+// Request configures http request.
 type Request struct {
-	Url string
+	URL string
 
 	PostBody    []byte
 	ContentType string
@@ -23,6 +26,7 @@ type Request struct {
 	AdditionalHeaders map[string]string
 }
 
+// Statistic contains measurement results.
 type Statistic struct {
 	// Overall number of bytes read.
 	ReadThroughput int64
@@ -40,12 +44,14 @@ type Statistic struct {
 	IOFailedCount int
 }
 
+// Client is a custom http client that performs a request and collects measurements.
 type Client struct {
 	Statistic  Statistic
 	Request    Request
-	HttpClient http.Client
+	HTTPClient http.Client
 }
 
+// NewRequest creates a new request.
 func NewRequest(
 	url string,
 	postDataFilePath string,
@@ -57,7 +63,7 @@ func NewRequest(
 ) *Request {
 	// preparing request
 	var request = Request{
-		Url:       url,
+		URL:       url,
 		KeepAlive: keepAlive,
 	}
 
@@ -91,15 +97,17 @@ func NewRequest(
 	return &request
 }
 
+// NewClient creates a new client instance.
 func NewClient(timeout time.Duration, Request Request) *Client {
 	return &Client{
-		HttpClient: http.Client{
+		HTTPClient: http.Client{
 			Timeout: timeout,
 		},
 		Request: Request,
 	}
 }
 
+// RunForDuration instructs the client to perform its request as often as possible for a given duration.
 func (c *Client) RunForDuration(timeout time.Duration) {
 	startTime := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -115,25 +123,28 @@ func (c *Client) RunForDuration(timeout time.Duration) {
 	}
 }
 
+// RunForAmount instructs the client to perform its request until a certain request count is reached.
 func (c *Client) RunForAmount(requestCount int) {
 	for i := 0; i < requestCount; i++ {
 		c.PerformRequest()
 	}
 }
 
+// PerformRequest instructs the client to perform its request once.
 func (c *Client) PerformRequest() {
 	c.PerformRequestWithContent(context.Background())
 }
 
+// PerformRequestWithContent instructs the client to perform its request once with a given context.
 func (c *Client) PerformRequestWithContent(ctx context.Context) {
 	// prepare request from configuration
 	var req *http.Request
 	var err error
 	if c.Request.PostBody != nil {
-		req, err = http.NewRequestWithContext(ctx, "POST", c.Request.Url, bytes.NewReader(c.Request.PostBody))
+		req, err = http.NewRequestWithContext(ctx, "POST", c.Request.URL, bytes.NewReader(c.Request.PostBody))
 		req.Header.Set("Content-Type", c.Request.ContentType)
 	} else {
-		req, err = http.NewRequestWithContext(ctx, "GET", c.Request.Url, nil)
+		req, err = http.NewRequestWithContext(ctx, "GET", c.Request.URL, nil)
 	}
 	if err != nil {
 		panic("Could not create http request")
@@ -153,7 +164,7 @@ func (c *Client) PerformRequestWithContent(ctx context.Context) {
 
 	// perform request
 	c.Statistic.RequestCount++
-	resp, err := c.HttpClient.Do(req)
+	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		c.Statistic.NetworkFailedCount++
 		return

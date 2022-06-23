@@ -17,7 +17,7 @@ func TestNewRequest(t *testing.T) {
 	result := NewRequest("http://localhost", "", "{\"test\":\"value\"}", "application/json", true, "authorizationHeader", "key1=value1,key2=value2, key3=value3")
 	// verify
 	verify.NotNil(t, result, "Request is nil")
-	verify.Equals(t, "http://localhost", result.Url)
+	verify.Equals(t, "http://localhost", result.URL)
 	verify.Equals(t, []byte("{\"test\":\"value\"}"), result.PostBody)
 	verify.Equals(t, "application/json", result.ContentType)
 	verify.Equals(t, true, result.KeepAlive)
@@ -44,7 +44,7 @@ func TestPerformRequest_get(t *testing.T) {
 	// create unit
 	unit := Client{
 		Request: Request{
-			Url: "http://localhost:8080/",
+			URL: "http://localhost:8080/",
 		},
 	}
 	// action
@@ -76,7 +76,7 @@ func TestPerformRequestWithContext_shouldCancelRequestAfterDeadline(t *testing.T
 	// create unit
 	unit := Client{
 		Request: Request{
-			Url: "http://localhost:8080/",
+			URL: "http://localhost:8080/",
 		},
 	}
 	// action
@@ -105,7 +105,7 @@ func TestPerformRequest_withCustomHeader(t *testing.T) {
 	// create unit
 	unit := Client{
 		Request: Request{
-			Url: "http://localhost:8080/",
+			URL: "http://localhost:8080/",
 			AdditionalHeaders: map[string]string{
 				"custom-header-field": "test header value",
 			},
@@ -135,7 +135,7 @@ func TestPerformRequest_post(t *testing.T) {
 	// create unit
 	unit := Client{
 		Request: Request{
-			Url:         "http://localhost:8080/",
+			URL:         "http://localhost:8080/",
 			PostBody:    []byte("test body"),
 			ContentType: "text/string",
 		},
@@ -169,7 +169,7 @@ func TestRunForAmount(t *testing.T) {
 	// create unit
 	unit := Client{
 		Request: Request{
-			Url: "http://localhost:8080/",
+			URL: "http://localhost:8080/",
 		},
 	}
 	// action
@@ -200,7 +200,7 @@ func TestRunForDuration(t *testing.T) {
 	// create unit
 	unit := Client{
 		Request: Request{
-			Url: "http://localhost:8080/",
+			URL: "http://localhost:8080/",
 		},
 	}
 	// action
