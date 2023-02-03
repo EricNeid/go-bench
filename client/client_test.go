@@ -6,6 +6,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -14,7 +15,15 @@ import (
 
 func TestNewRequest(t *testing.T) {
 	// action
-	result := NewRequest("http://localhost", "", "{\"test\":\"value\"}", "application/json", true, "authorizationHeader", "key1=value1,key2=value2, key3=value3")
+	result := NewRequest(
+		"http://localhost",
+		"",
+		"{\"test\":\"value\"}",
+		"application/json",
+		true,
+		"authorizationHeader",
+		"key1=value1,key2=value2, key3=value3",
+	)
 	// verify
 	verify.NotNil(t, result, "Request is nil")
 	verify.Equals(t, "http://localhost", result.URL)
@@ -30,27 +39,15 @@ func TestNewRequest(t *testing.T) {
 
 func TestPerformRequest_get(t *testing.T) {
 	// arrange
-	requestReceived := false
-	// create test server
-	handler := http.NewServeMux()
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		requestReceived = true
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("test response"))
-	})
-	srv := http.Server{Addr: "localhost:8080", Handler: handler}
-	go srv.ListenAndServe()
-	defer srv.Close()
-	// create unit
-	unit := Client{
-		Request: Request{
-			URL: "http://localhost:8080/",
-		},
-	}
+	}))
+	defer mockServer.Close()
+	unit := Client{Request: Request{URL: mockServer.URL}}
 	// action
 	unit.PerformRequest()
 	// verify
-	verify.Assert(t, requestReceived, "Request was not received")
 	verify.Equals(t, 1, unit.Statistic.RequestCount)
 	verify.Equals(t, 1, unit.Statistic.SuccessCount)
 	verify.Equals(t, 0, unit.Statistic.FailureCount)
@@ -62,23 +59,15 @@ func TestPerformRequest_get(t *testing.T) {
 
 func TestPerformRequestWithContext_shouldCancelRequestAfterDeadline(t *testing.T) {
 	// arrange
-	// create test server
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(1)*time.Second)
 	defer cancel()
-	handler := http.NewServeMux()
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// let client hang until timeout
 		<-ctx.Done()
-	})
-	srv := http.Server{Addr: "localhost:8080", Handler: handler}
-	go srv.ListenAndServe()
-	defer srv.Close()
+	}))
+	defer mockServer.Close()
 	// create unit
-	unit := Client{
-		Request: Request{
-			URL: "http://localhost:8080/",
-		},
-	}
+	unit := Client{Request: Request{URL: mockServer.URL}}
 	// action
 	unit.PerformRequestWithContent(ctx)
 	// verify
@@ -91,21 +80,19 @@ func TestPerformRequestWithContext_shouldCancelRequestAfterDeadline(t *testing.T
 func TestPerformRequest_withCustomHeader(t *testing.T) {
 	// arrange
 	requestReceived := false
-	// create test server
-	handler := http.NewServeMux()
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("custom-header-field") == "test header value" {
 			requestReceived = true
+			w.WriteHeader(http.StatusOK)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
 		}
-		w.WriteHeader(http.StatusOK)
-	})
-	srv := http.Server{Addr: "localhost:8080", Handler: handler}
-	go srv.ListenAndServe()
-	defer srv.Close()
+	}))
+	defer mockServer.Close()
 	// create unit
 	unit := Client{
 		Request: Request{
-			URL: "http://localhost:8080/",
+			URL: mockServer.URL,
 			AdditionalHeaders: map[string]string{
 				"custom-header-field": "test header value",
 			},
@@ -120,22 +107,17 @@ func TestPerformRequest_withCustomHeader(t *testing.T) {
 func TestPerformRequest_post(t *testing.T) {
 	// arrange
 	requestReceived := false
-	// create test server
-	handler := http.NewServeMux()
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if body, err := io.ReadAll(r.Body); err == nil && string(body) == "test body" {
 			requestReceived = true
 		}
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("test response"))
-	})
-	srv := http.Server{Addr: "localhost:8080", Handler: handler}
-	go srv.ListenAndServe()
-	defer srv.Close()
-	// create unit
+	}))
+	defer mockServer.Close()
 	unit := Client{
 		Request: Request{
-			URL:         "http://localhost:8080/",
+			URL:         mockServer.URL,
 			PostBody:    []byte("test body"),
 			ContentType: "text/string",
 		},
@@ -156,22 +138,13 @@ func TestPerformRequest_post(t *testing.T) {
 func TestRunForAmount(t *testing.T) {
 	// arrange
 	receivedCount := 0
-	// create test server
-	handler := http.NewServeMux()
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		receivedCount++
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("test response"))
-	})
-	srv := http.Server{Addr: "localhost:8080", Handler: handler}
-	go srv.ListenAndServe()
-	defer srv.Close()
-	// create unit
-	unit := Client{
-		Request: Request{
-			URL: "http://localhost:8080/",
-		},
-	}
+	}))
+	defer mockServer.Close()
+	unit := Client{Request: Request{URL: mockServer.URL}}
 	// action
 	unit.RunForAmount(10)
 	// verify
@@ -187,22 +160,13 @@ func TestRunForAmount(t *testing.T) {
 func TestRunForDuration(t *testing.T) {
 	// arrange
 	receivedCount := 0
-	// create test server
-	handler := http.NewServeMux()
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedCount++
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("test response"))
-		receivedCount++
-	})
-	srv := http.Server{Addr: "localhost:8080", Handler: handler}
-	go srv.ListenAndServe()
-	defer srv.Close()
-	// create unit
-	unit := Client{
-		Request: Request{
-			URL: "http://localhost:8080/",
-		},
-	}
+	}))
+	defer mockServer.Close()
+	unit := Client{Request: Request{URL: mockServer.URL}}
 	// action
 	unit.RunForDuration(1 * time.Second)
 	// verify
