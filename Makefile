@@ -2,35 +2,33 @@
 # SPDX-License-Identifier: CC0-1.0
 
 DIR := ${CURDIR}
+GO_IMAGE := golang:1.20.0-alpine
 
 .PHONY: build-windows
 build-windows:
 	docker run -it --rm \
-		-e CGO_ENABLED=0 \
 		-e GOOS=windows \
 		-e GOARCH=amd64 \
 		-w /app -v ${DIR}:/app \
-		golang:1.19.3-alpine \
+		${GO_IMAGE} \
 		go build -o ./out/ ./cmd/gobench/
 
 
 .PHONY: build-linux
 build-linux:
 	docker run -it --rm \
-		-e CGO_ENABLED=0 \
 		-e GOOS=linux \
 		-e GOARCH=amd64 \
 		-w /app -v ${DIR}:/app \
-		golang:1.19.3-alpine \
+		${GO_IMAGE} \
 		go build -o ./out/ ./cmd/gobench/
 
 
 .PHONY: test
 test:
 	docker run -it --rm \
-		-e CGO_ENABLED=0 \
 		-w /app -v ${DIR}:/app \
-		golang:1.19.3-alpine \
+		${GO_IMAGE} \
 		go test ./...
 
 
