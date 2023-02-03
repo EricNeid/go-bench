@@ -2,4 +2,4 @@
 // SPDX-License-Identifier: MIT
 module github.com/EricNeid/go-bench
 
-go 1.16
+go 1.18

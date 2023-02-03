@@ -15,23 +15,23 @@ import (
 const version = "0.3.0"
 
 var (
-	clientCount int = 100
+	clientCount = 100
 
-	requestCount        int = -1
-	requestsDurationSec int = -1
+	requestCount        = -1
+	requestsDurationSec = -1
 
-	url string = ""
+	url = ""
 
-	postDataFilePath string = ""
-	postBody         string = ""
-	contentType      string = ""
+	postDataFilePath = ""
+	postBody         = ""
+	contentType      = ""
 
-	keepAlive bool = false
+	keepAlive = false
 
 	clientTimeoutMs int64 = 10 * 1000 // 10 seconds
 
-	authHeader        string = ""
-	additionalHeaders string = ""
+	authHeader        = ""
+	additionalHeaders = ""
 )
 
 func init() {
@@ -135,8 +135,8 @@ func printResults(clients []*client.Client, startTime time.Time) {
 		success += int64(c.Statistic.SuccessCount)
 		networkFailed += int64(c.Statistic.NetworkFailedCount)
 		failed += int64(c.Statistic.FailureCount)
-		readThroughput += int64(c.Statistic.ReadThroughput)
-		writeThroughput += int64(c.Statistic.WriteThroughput)
+		readThroughput += c.Statistic.ReadThroughput
+		writeThroughput += c.Statistic.WriteThroughput
 	}
 
 	elapsed := int64(time.Since(startTime).Seconds())

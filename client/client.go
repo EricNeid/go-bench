@@ -33,7 +33,7 @@ type Statistic struct {
 	// Overall number of bytes written.
 	WriteThroughput int64
 
-	// Overall number of performed requests, always equal to the sum of failed and successfull requests.
+	// Overall number of performed requests, always equal to the sum of failed and successful requests.
 	RequestCount int
 	SuccessCount int
 	// Number of requests that failed with status code != 2xx.
@@ -98,12 +98,12 @@ func NewRequest(
 }
 
 // NewClient creates a new client instance.
-func NewClient(timeout time.Duration, Request Request) *Client {
+func NewClient(timeout time.Duration, request Request) *Client {
 	return &Client{
 		HTTPClient: http.Client{
 			Timeout: timeout,
 		},
-		Request: Request,
+		Request: request,
 	}
 }
 
@@ -144,7 +144,7 @@ func (c *Client) PerformRequestWithContent(ctx context.Context) {
 		req, err = http.NewRequestWithContext(ctx, "POST", c.Request.URL, bytes.NewReader(c.Request.PostBody))
 		req.Header.Set("Content-Type", c.Request.ContentType)
 	} else {
-		req, err = http.NewRequestWithContext(ctx, "GET", c.Request.URL, nil)
+		req, err = http.NewRequestWithContext(ctx, "GET", c.Request.URL, http.NoBody)
 	}
 	if err != nil {
 		panic("Could not create http request")

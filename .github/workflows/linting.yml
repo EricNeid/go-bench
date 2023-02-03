@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: 2021 Eric Neidhardt
+# SPDX-License-Identifier: CC0-1.0
+
+name: Running golangci-lint
+on: [push, pull_request]
+
+jobs:
+  golangci:
+    name: Running golangci-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.50.1
+
